@@ -1,0 +1,1 @@
+This repo contains some scripts for running distributed graphsage on Euler(https://github.com/alibaba/euler/) since its original repo lacks some important guide of distributed training and part of its doc is outdated.

@@ -8,6 +8,8 @@ To run these code, you need to modify them according to your cluster configurati
  + `launch_server.sh` : to launch euler servers. Note that you need to first start the zookeeper server. The single node mode is sufficient.
  + `lanuch.py` : to start training. This launch scripted is adapted from that of DGL. 
 
-### Efficiency
+### Result
+
+    
 
 

@@ -6,10 +6,7 @@ import itertools
 # create log directory and add symbolic link
 LOG_DIR_PREFIX = "log"
 LATEST_LOG_DIR = "log/latest"
-
-# read ip config
-with open("ip_config.txt", "r") as f:
-  machine_ip = [line.split(' ')[0] for line in f]
+WORKSPACE = "~/graphsage/"
 
 def create_log_dir():
   time_stamp = time.strftime("%m%d-%H%M%S", time.localtime())
@@ -45,13 +42,29 @@ def run_experiment(cmd, name='', timeout=1800):
 
 
 def run_graphsage():
-  num_gpu_per_machine = [1]
-  fanouts = [5, 10]
+  num_gpu_per_machine = [1, 2, 4]
+  fanouts = [5, 10, 20]
   hops = [3]
   batch = [1000, 2000, 5000]
+  dataset = 'ogb-paper100M'
   for n_g, f, h, b in itertools.product(num_gpu_per_machine, fanouts, hops, batch):
+    # skip some large settings
+    if n_g >= 4 and f >= 10:
+      continue
+    if n_g > 1 and f >= 20:
+      continue
+    if b > 1000 and f >= 20:
+      continue
     f_multilayer = ','.join([str(f)] * h)
-    run_experiment('python3 launch.py --workspace ~/graphsage/ --num_trainers {} --num_samplers 8 --num_servers 8 --part_config ogb-product/ogb-product.json --ip_config ip_config.txt "python3 train_dist.py --graph_name ogb-product --ip_config ip_config.txt --num_servers 8 --num_epochs 1 --batch_size {}  --num_workers 8 --num_gpus {} --num_hidden 128 --fan_out {} --num_layers {} --eval_every 9999 --close_profiler"'.format(n_g, b, n_g, f_multilayer, h), name="{}_{}_{}_{}".format(n_g, f, h, b))
+    run_experiment('python3 launch.py --workspace {workspace} --num_trainers {n_gpu} \
+      --num_samplers 8 --num_servers 8 --part_config {dataset}/{dataset}.json \
+      --ip_config ip_config.txt \
+      "python3 train_dist.py --graph_name {dataset} --ip_config ip_config.txt --num_servers 8 \
+      --num_epochs 7 --batch_size {batchsize}  --num_workers 8 --num_gpus {n_gpu} \
+      --num_hidden 256 --fan_out {fanout} --num_layers {layers} --eval_every 9999 \
+      --close_profiler --dynamic_batch"'.format(workspace=WORKSPACE,
+      n_gpu=n_g, batchsize=b, fanout=f_multilayer, layers=h, dataset=dataset)
+      , name="{}_{}_{}_{}".format(n_g, f, h, b))
 
 def run_GAT():
   pass
@@ -59,4 +72,4 @@ def run_GAT():
 if __name__ == "__main__":
   create_log_dir()
   run_graphsage()
-  os.system("./update.sh")
+  os.system("./update.sh") # clean

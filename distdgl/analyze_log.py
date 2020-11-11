@@ -31,24 +31,52 @@ def read_itr_log(path):
     rows = [list(map(float, x)) for x in reader]
   return title, np.array(rows)
 
-def diff_backward_time(log_dir):
+def read_itr_log_exp(path):
+  num_trainers = len(os.listdir(path)) // 2
+  title = None
+  data = []
+  for i in range(num_trainers):
+    itr_log = "log_itr_{}.txt".format(i)
+    itr_log = os.path.join(path, itr_log)
+    if not os.path.exists(itr_log):
+      title = None
+      break
+    title, rows = read_itr_log(itr_log)
+    data.append(rows)
+  data = np.array(data)
+  return title, data
+
+def components(path):
   experiments = os.listdir(log_dir)
   experiments.sort()
-  print("========== Difference of backward time / iteration time (s) ==========")
+  print("========== Time spent on each component (per iteration) (s) ==========")
+  for e in experiments:
+    exp_dir = os.path.join(log_dir, e)
+    title, data = read_itr_log_exp(exp_dir)
+    if title is None or len(data.shape) < 3:
+      print("{}\t N/A".format(e))
+      continue
+    try:
+      #print(data.shape)
+      avg = np.mean(data, axis=1)
+      avg = np.mean(avg, axis=0)
+      print(e,"\t", end="")
+      for field, value in zip(title, avg):
+        print("{}: {:.3f} | ".format(field, value), end="")
+      print("")
+    except ValueError:
+      print("{}\tN/A".format(e))
+
+def diff_backward_time(path):
+  experiments = os.listdir(log_dir)
+  experiments.sort()
+  print("========== difference of backward time / iteration time(s) ==========")
   for e in experiments:
     exp_dir = os.path.join(log_dir, e)
     num_trainers = len(os.listdir(exp_dir)) // 2
     data = []
-    flag = False
-    for i in range(num_trainers):
-      itr_log = "log_itr_{}.txt".format(i)
-      itr_log = os.path.join(exp_dir, itr_log)
-      if not os.path.exists(itr_log):
-        break
-      title, rows = read_itr_log(itr_log)
-      data.append(rows)
-    data = np.array(data)
-    if data.shape[0] < num_trainers or num_trainers <= 0:
+    title, data = read_itr_log_exp(exp_dir)
+    if title is None or data.shape[0] < num_trainers or num_trainers <= 0:
       print("{}\t N/A".format(e))
       continue
     try:
@@ -69,4 +97,5 @@ if __name__ == "__main__":
     dir_name = sys.argv[1]
   log_dir = os.path.join(LOG_PATH, dir_name)
   read_epoch_time(log_dir)
+  components(log_dir)
   diff_backward_time(log_dir)

@@ -1,16 +1,16 @@
 #!/bin/bash
-WORKSPACE=~/graphsage
+WORKSPACE=$1
 num_remote=`wc -l ip_config.txt | cut -d " " -f1`
 echo Number of remote machines: $num_remote
 if [ -f "port.txt" ]; then
         read last_port < port.txt;
 else
-        last_port=20000;
+        last_port=40000;
 fi
 port=`expr $last_port + 345`
-if [ $port -gt 40000 ]
+if [ $port -gt 60000 ]
 then
-        port=20000;
+        port=40000;
 fi
 echo 'choose port' $port
 echo $port > port.txt
@@ -25,11 +25,12 @@ do
         continue
     fi
     echo $remote
-    ssh $remote "pkill -f -9 train ; pkill -f -9 python ; rm /dev/shm/*"   </dev/null
-	scp entity_classify_dist.py train_dist_unsupervised.py train_dist.py train_GAT.py train_async.py ip_config.txt $remote:$WORKSPACE/ 
+    ssh -n $remote "pkill -f train ; pkill -f python ; rm /dev/shm/*"
+    # Is there any elegant way to kill processes?
+    scp ip_config.txt $remote:$WORKSPACE/
 done <ip_config.txt
 wait
-pkill -f -9 train
-pkill -f -9 torch
-pkill -f -9 multiprocessing
+pkill -f train
+pkill -f torch
+pkill -f multiprocessing
 rm /dev/shm/* 

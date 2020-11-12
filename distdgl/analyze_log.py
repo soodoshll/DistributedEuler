@@ -24,6 +24,9 @@ def read_epoch_time(log_dir):
         print("{}\tN/A".format(e))
 
 def read_itr_log(path):
+  # read log_itr_*.txt
+  # title is the names of each field
+  # the shape of rows is [iterations, fields]
   with open(path) as f:
     title = f.readline()
     title = title.strip().split('\t')
@@ -32,6 +35,8 @@ def read_itr_log(path):
   return title, np.array(rows)
 
 def read_itr_log_exp(path):
+  # read all log_itr_*.txt under the directory of one experiment
+  # the shape of data is [trainers, iterations, fields]
   num_trainers = len(log_files(path)) // 2
   title = None
   data = []
@@ -47,6 +52,7 @@ def read_itr_log_exp(path):
   return title, data
 
 def log_files(path):
+  # return a list of files under `path` and matches regrex "log*.txt"
   return list(filter(lambda x: x[:3]=='log' and x[-4:]=='.txt', os.listdir(path)))
 
 def components(path):
@@ -118,4 +124,4 @@ if __name__ == "__main__":
   #read_epoch_time(log_dir)
   components(log_dir)
   #diff_backward_time(log_dir)
-  field_file(log_dir)
+  #field_file(log_dir)

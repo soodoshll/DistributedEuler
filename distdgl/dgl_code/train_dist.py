@@ -227,6 +227,7 @@ def run(args, device, data):
         num_inputs = []
         num_seeds = []
         num_edges = []
+        g.barrier()
         tic = time.time()
         start = time.time()
         itr_start = time.time()
@@ -329,6 +330,7 @@ def run(args, device, data):
                 shuffle=True,
                 drop_last=False)
             g.barrier()
+        g.barrier()
    
     print("Average Epoch Time: {}".format(np.mean(epoch_time)), file=epoch_logfile)
     if args.close_profiler == False :

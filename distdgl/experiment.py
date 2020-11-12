@@ -28,7 +28,7 @@ def update():
 # files from remote machine.
 def run_experiment(cmd, name='', timeout=2400):
   print("Cleaning environment...")
-  os.system("./update.sh")
+  update()
   print("Cleaning environment finished, start running")
   try:
     subprocess.run(cmd, timeout=timeout, shell=True)
@@ -55,7 +55,7 @@ def run_graphsage():
   fanouts = [5,10,15]
   hops = [3]
   batch = [1000, 2000, 5000]
-  dataset = 'ogb-paper100M'
+  dataset = 'ogb-product'
   for n_g, f, h, b in itertools.product(num_gpu_per_machine, fanouts, hops, batch):
     # skip some large settings
     if n_g >= 4 and f > 10:
@@ -70,21 +70,13 @@ def run_graphsage():
     run_experiment('python3 launch.py --workspace {workspace} --num_trainers {n_gpu} \
       --num_samplers 8 --num_servers 8 --part_config {dataset}/{dataset}.json \
       --ip_config ip_config.txt \
-      "python3 train_dist.py --graph_name {dataset} --ip_config ip_config.txt --num_servers 8 \
+      "python3 dgl_code/train_dist.py --graph_name {dataset} --ip_config ip_config.txt --num_servers 8 \
       --num_epochs 7 --batch_size {batchsize}  --num_workers 8 --num_gpus {n_gpu} \
       --num_hidden 256 --fan_out {fanout} --num_layers {layers} --eval_every 9999 \
       "'.format(workspace=WORKSPACE,
-      n_gpu=n_g, batchsize=b, fanout=f_multilayer, layers=h, dataset=dataset)
-      , name="async_{}_{}_{}_{}".format(n_g, f, h, b))
-    # run_experiment('python3 launch.py --workspace {workspace} --num_trainers {n_gpu} \
-    #   --num_samplers 8 --num_servers 8 --part_config {dataset}/{dataset}.json \
-    #   --ip_config ip_config.txt \
-    #   "python3 train_dist.py --graph_name {dataset} --ip_config ip_config.txt --num_servers 8 \
-    #   --num_epochs 7 --batch_size {batchsize}  --num_workers 8 --num_gpus {n_gpu} \
-    #   --num_hidden 256 --fan_out {fanout} --num_layers {layers} --eval_every 9999 \
-    #   --close_profiler --dynamic_batch"'.format(workspace=WORKSPACE,
-    #   n_gpu=n_g, batchsize=b, fanout=f_multilayer, layers=h, dataset=dataset)
-    #   , name="{}_{}_{}_{}d".format(n_g, f, h, b))
+      n_gpu=n_g, batchsize=b, fanout=f_multilayer, layers=h, dataset=dataset) # Set parameters
+      , name="ngpu_{}_fanout_{}_hops_{}_batchsize_{}".format(n_g, f, h, b)) # Set the name of experiment
+
 def run_GAT():
   pass
 
@@ -96,4 +88,4 @@ if __name__ == "__main__":
   if not args.continues:
     create_log_dir()
   run_graphsage()
-  os.system("./update.sh") # clean
+  update() # clean

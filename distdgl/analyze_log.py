@@ -32,7 +32,7 @@ def read_itr_log(path):
   return title, np.array(rows)
 
 def read_itr_log_exp(path):
-  num_trainers = len(os.listdir(path)) // 2
+  num_trainers = len(log_files(path)) // 2
   title = None
   data = []
   for i in range(num_trainers):
@@ -46,6 +46,9 @@ def read_itr_log_exp(path):
   data = np.array(data)
   return title, data
 
+def log_files(path):
+  return list(filter(lambda x: x[:3]=='log' and x[-4:]=='.txt', os.listdir(path)))
+
 def components(path):
   experiments = os.listdir(log_dir)
   experiments.sort()
@@ -57,7 +60,6 @@ def components(path):
       print("{}\t N/A".format(e))
       continue
     try:
-      #print(data.shape)
       avg = np.mean(data, axis=1)
       avg = np.mean(avg, axis=0)
       print(e,"\t", end="")
@@ -77,7 +79,7 @@ def diff_backward_time(path):
     data = []
     title, data = read_itr_log_exp(exp_dir)
     if title is None or data.shape[0] < num_trainers or num_trainers <= 0:
-      print("{}\t N/A".format(e))
+      print("{}\t N/A data incomplete".format(e))
       continue
     try:
       backward_idx = title.index('backward')
@@ -87,8 +89,25 @@ def diff_backward_time(path):
       max_bw = np.max(backward, axis=0)
       min_bw = np.min(backward, axis=0)
       print("{}\t{:.4f}\t{:.4f}".format(e, np.mean(max_bw) - np.mean(min_bw), np.mean(itr_time))) # [trainer, iteration, field]
-    except ValueError:
-      print("{}\tN/A".format(e))
+    except (ValueError, IndexError):
+      print("{}\tN/A value error".format(e))
+
+def field_file(path):
+  experiments = os.listdir(log_dir)
+  experiments.sort()
+  for e in experiments:
+    exp_dir = os.path.join(log_dir, e)
+    log_file = log_files(exp_dir)
+    num_trainers = len(list(log_file)) // 2
+    data = []
+    title, data = read_itr_log_exp(exp_dir)
+    if title is None or data.shape[0] < num_trainers or num_trainers <= 0:
+      continue
+    try:
+      for i in range(len(title)):
+        np.savetxt(os.path.join(exp_dir, title[i] + ".txt"), data[:, :, i].T)
+    except (ValueError, IndexError):
+      print("{} N/A".format(e))
 
 if __name__ == "__main__":
   if len(sys.argv) <= 1:
@@ -96,6 +115,7 @@ if __name__ == "__main__":
   else:
     dir_name = sys.argv[1]
   log_dir = os.path.join(LOG_PATH, dir_name)
-  read_epoch_time(log_dir)
+  #read_epoch_time(log_dir)
   components(log_dir)
-  diff_backward_time(log_dir)
+  #diff_backward_time(log_dir)
+  field_file(log_dir)

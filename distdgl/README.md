@@ -2,7 +2,7 @@ This is the benchmark script of DistDGL.
 
 ## Usage
 
-Follow the instructions in `DistDGL/examples/pytorch/graphsage/experimental` and copy these files into the workspace directory.
+Follow the instructions in `DistDGL/examples/pytorch/graphsage/experimental` and copy(or link) these files into the workspace directory.
 
 ### Log format
 
@@ -20,10 +20,20 @@ Run experiments in one line:
 python experiment.py
 ```
 
-The script will automatically create a log directory with the timestamp as its name under `<workspace>/log`, and a symbol link `<workspace>/log/latest` linked to this directory. So to get the result of the latest experiment, just enter `<workspace>/log/latest`.
+The script will create a log directory with the timestamp as its name under `<workspace>/log`, and a symbol link `<workspace>/log/latest` linked to this directory. So to get the result of the latest experiment, just enter `<workspace>/log/latest`.
+
+You can also add your own experiment in it.
 
 ### Data Analysis
 
 ```
 python analyze_log.py
 ```
+
+or
+
+```
+python analyze_log.py <experiment>
+```
+
+it will generate a report of the experiment from the logs in `<workspace>/log/<experiment>`.

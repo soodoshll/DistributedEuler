@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+print("Sayonara Sayonara")
 import tensorflow as tf
 import tf_euler
 import json
@@ -9,8 +10,8 @@ import os
 from euler_estimator import NodeEstimator
 from graphsage import SupervisedGraphSage
 
-config = tf.ConfigProto()
-config.gpu_options.allow_growth = True
+print("ev set by user:", os.environ.keys())
+os.environ["OMP_NUM_THREADS"]="1" 
 
 class Estimator(NodeEstimator):
     def __init__(self, model_class, params, run_config, num_worker):
@@ -27,7 +28,8 @@ class Estimator(NodeEstimator):
         train_op = opt.minimize(loss, global_step)
         print("!!###@@@", tf.flags.FLAGS.task_type, tf.flags.FLAGS.task_type == 'chief')
         sync_replicas_hook = opt.make_session_run_hook(tf.flags.FLAGS.task_type == 'chief', num_tokens=0)    
-        hooks = [sync_replicas_hook]
+        hooks = []
+        hooks.append(sync_replicas_hook)
         tensor_to_log = {'step': global_step,
             'loss': loss,
             metric_name: metric}
@@ -71,14 +73,17 @@ def get_dataset(dataset):
                 "num_classes" : 41
                 }
     elif dataset == 'ogb-product':
-        return {"train_label" : ['train'],
-                "all_label" : ['train', 'val', 'test'],
+        return {"train_label" : [0],
+                "all_label" : [0],
                 "max_node_id" : 2449029,
                 "feature_dim" : 100,
                 "num_classes" : 47
                 }
+        
 
 def main(_):
+    print("Kai Jun Jian")
+    print("ev set by user:", os.environ.keys())
     flags_obj = tf.flags.FLAGS
     cluster = {'chief': flags_obj.chief.split(','),
                'ps': flags_obj.ps.split(','),
@@ -99,6 +104,7 @@ def main(_):
             'shard_num': flags_obj.shard_num,
             'num_retries': 1
         })
+    # print("HERE")
 
     dataset = get_dataset(flags_obj.dataset)
 
@@ -132,11 +138,15 @@ def main(_):
     #opt = tf.train.SyncReplicasOptimizer(opt, replicas_to_aggregate=2)
 
 
-    config = tf.estimator.RunConfig(log_step_count_steps=None)
+    sess_config = tf.ConfigProto(allow_soft_placement=True, device_count={"CPU": 1}, intra_op_parallelism_threads = 1, inter_op_parallelism_threads = 1)
+    sess_config.intra_op_parallelism_threads = 1
+    sess_config.inter_op_parallelism_threads = 1
+    config = tf.estimator.RunConfig(log_step_count_steps=None, session_config=sess_config)
     num_worker = len(cluster['chief']) + len(cluster['worker']) 
     model_estimator = Estimator(model, params, config, num_worker)
 
     if flags_obj.run_mode == 'train':
+    #    with tf.contrib.tfprof.ProfileContext('/tmp/train_dir_'+str(flags_obj.task_type)+"_"+str(flags_obj.task_id), dump_steps=[10]) as pctx:
         model_estimator.train_and_evaluate()
     #elif flags_obj.run_mode == 'evaluate':
     #    model_estimator.evaluate()
@@ -147,6 +157,7 @@ def main(_):
 
 
 if __name__ == '__main__':
+    print("Hen You Jing Shen")
     tf.logging.set_verbosity(tf.logging.INFO)
     define_network_flags()
     tf.app.run(main)

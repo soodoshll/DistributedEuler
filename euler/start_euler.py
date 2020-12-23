@@ -1,6 +1,7 @@
 import euler
 import time
 import argparse
+from euler import Module
 
 parser = argparse.ArgumentParser()
 parser.add_argument("data")
@@ -12,6 +13,8 @@ if args.data == 'reddit':
     data_path = 'dataset/reddit/reddit4/'
 elif args.data == "ogb-product":
     data_path = 'dataset/ogb-product/product4/'
+elif args.data == "wn18":
+    data_path = 'dataset/WN18/wn18-4/'
 else:
     print "unknown dataset"
     exit(-1)
@@ -22,6 +25,6 @@ euler.start(
         shard_num=args.shard_num,   
         zk_addr='node0:2181',
         zk_path='/euler', 
-        module=euler.Module.DEFAULT_MODULE)
+        module=Module.DEFAULT_MODULE | Module.EDGE)
 while True:
         time.sleep(1)

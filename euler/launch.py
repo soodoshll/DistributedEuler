@@ -46,15 +46,18 @@ def submit_jobs(args, udf_command):
     ps_arg = ",".join(ps)
     chief_arg = ",".join(chief)
     worker_arg = ",".join(worker)
-    command = "cd ~/euler_profile ; " + udf_command + " --ps {} --chief {} --worker {}".format(ps_arg, chief_arg, worker_arg) 
+    command =udf_command + " --ps {} --chief {} --worker {}".format(ps_arg, chief_arg, worker_arg) 
     print(command)
 
     # start ps
-    ps_command = command + " --task_type ps --task_id 0"
+    ps_command =  "cd ~/euler_profile ; " + command + " --task_type ps --task_id 0"
     print(ps_command)
     execute_remote(ps_command, hosts[0], args.ssh_port, thread_list)
     # start cheif
-    chief_command = command + " --task_type chief --task_id 0 2> chief.err > chief.out"
+    threads_per_worker = 48 // args.num_workers
+    omp_num_threads=1
+    command = "TF_NUM_INTEROP_THREADS=1 TF_NUM_INTRAOP_THREADS=1 "  + command
+    chief_command = "cd ~/euler_profile ; " + command + " --task_type chief --task_id 0" 
     print(chief_command)
     execute_remote(chief_command, hosts[0], args.ssh_port, thread_list)
     # start worker
@@ -63,7 +66,7 @@ def submit_jobs(args, udf_command):
         for i in range(args.num_workers):
             if i == 0 and host == hosts[0]:
                 continue
-            worker_command = command + " --task_type worker --task_id {} 2> worker{}.err > worker{}.err".format(worker_id, worker_id, worker_id)
+            worker_command =  "cd ~/euler_profile ; TF_NUM_INTEROP_THREADS=1 TF_NUM_INTRAOP_THREADS=1 " + command + " --task_type worker --task_id {} 2> worker{}.err > worker{}.out".format(worker_id, worker_id, worker_id)
             worker_id += 1
             print(worker_command)
             execute_remote(worker_command, host, args.ssh_port, thread_list)
